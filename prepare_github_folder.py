@@ -10,7 +10,8 @@ from pathlib import Path
 HERE = Path(__file__).parent
 OUT = HERE.parent / "windborne-iceland-github"
 PUBLIC = [
-    "README.md", "writeup.md", "writeup.pdf", "decisions.md", "limitations.md", "environment.yml",
+    "README.md", "writeup.md", "writeup.pdf", "Iceland_Launch_Site_Assessment_Senan_Tubridy.pdf",
+    "make_brief.py", "brief_map.png", "brief_chart_gap_hours.png", "brief_chart_arctic_weather.png", "decisions.md", "limitations.md", "environment.yml",
     "balloon.py", "make_figures.py", "make_replay_data.py", "build_pdf.py", "prepare_github_folder.py",
     "01_winds_stations_integrator.ipynb", "02_passive_gap_hours.ipynb",
     "03_checks_wide_box_and_arctic.ipynb", "04_steered.ipynb", "05_sensitivity_no_250hPa.ipynb",

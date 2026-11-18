@@ -11,6 +11,7 @@ Senan Tubridy, Boston, November 2026.
 | File | What it does |
 | --- | --- |
 | [writeup.pdf](writeup.pdf) | Two-page write-up with sources ([writeup.md](writeup.md) is the text) |
+| [Iceland_Launch_Site_Assessment_Senan_Tubridy.pdf](Iceland_Launch_Site_Assessment_Senan_Tubridy.pdf) | Two-page brief: the question, the answer, the charts and the open questions (built by `make_brief.py`) |
 | [replay.html](replay.html) | Interactive replay of winter 2020/21: one launch a day from each site, drifting or steered. Open it in a browser. |
 | [balloon.py](balloon.py) | The model: wind interpolation, RK4 integrator (lat/lon and pole-safe 3D), the gap, greedy steering |
 | `01_winds_stations_integrator.ipynb` | Loads winds and stations, draws the gap, tests the integrator on an exact rotation |
