@@ -1,7 +1,7 @@
 # What one Iceland launch buys
 
 Senan Tubridy · Boston · November 2026
-Code, notebooks and an interactive replay: github.com/SenanTub/iceland-launch-gap-hours
+Code, notebooks and an interactive replay: github.com/SenanTub/SenanTub-iceland-launch-gap-hours
 
 **Short answer: less than I thought.** Per launch, a balloon from Iceland spends less time over the thinly observed North Atlantic than one from the northeastern US. That holds whether it drifts or steers, with the gap set at 500 or 800 km. Iceland's one real edge is the Arctic, where steered balloons get about 1.2 to 1.5 times the hours a US balloon does. So I'd take back the gap-filling part of my Iceland proposal.
 
