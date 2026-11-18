@@ -1,0 +1,343 @@
+<title>Iceland Launch Replay</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: polar map on the left, controls and per-site counters on the right; stacks on phones. */
+:root {
+  --bg: #f4f6f8;          /* page */
+  --panel: #ffffff;       /* raised surfaces */
+  --ocean: #e6ecf1;       /* map disc */
+  --land: #9aa7b3;        /* coastlines */
+  --grid: #cfd8e0;        /* graticule */
+  --gap: rgba(98, 80, 214, 0.22);   /* the 500 km gap */
+  --gap-edge: rgba(98, 80, 214, 0.45);
+  --station: #6b7785;
+  --fg: #16202a;
+  --fg-2: #4a5663;
+  --fg-3: #7a8693;
+  --line: #d9e0e6;
+  --accent: #2a5d8a;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --panel: #171e26; --ocean: #1a232d; --land: #6f7e8c; --grid: #26313c;
+    --gap: rgba(144, 133, 233, 0.24); --gap-edge: rgba(144, 133, 233, 0.5); --station: #8d99a6;
+    --fg: #e8edf2; --fg-2: #b3bec9; --fg-3: #84909c; --line: #2a3540; --accent: #7fb0dd;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --panel: #171e26; --ocean: #1a232d; --land: #6f7e8c; --grid: #26313c;
+  --gap: rgba(144, 133, 233, 0.24); --gap-edge: rgba(144, 133, 233, 0.5); --station: #8d99a6;
+  --fg: #e8edf2; --fg-2: #b3bec9; --fg-3: #84909c; --line: #2a3540; --accent: #7fb0dd;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 32px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header { display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+h1 { font-size: 1.6rem; font-weight: 600; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 0; color: var(--fg-2); }
+.label {
+  font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3);
+}
+.main { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+.mapbox { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+canvas { width: 100%; aspect-ratio: 1 / 1; display: block; max-width: 100%; }
+.time { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.time output { font-family: var(--font-mono); font-size: 0.9rem; font-variant-numeric: tabular-nums; min-width: 17ch; }
+input[type="range"] { flex: 1 1 200px; accent-color: var(--accent); min-width: 0; }
+button {
+  font: inherit; font-size: 0.9rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 6px 12px; cursor: pointer;
+}
+button:hover { border-color: var(--fg-3); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82rem; color: var(--fg-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 14px; height: 10px; border-radius: 2px; background: var(--gap); border: 1px solid var(--gap-edge); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--station); }
+
+.side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.modes button { text-align: left; display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; }
+.modes button small { color: var(--fg-3); font-size: 0.76rem; }
+.modes button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+
+.sites { display: flex; flex-direction: column; gap: 10px; }
+.site { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; }
+.site input { accent-color: var(--accent); margin: 0; }
+.site .name { font-weight: 500; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.site .chip { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.site .total { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+.site .bar { grid-column: 2 / 4; height: 6px; background: var(--ocean); border-radius: 3px; overflow: hidden; }
+.site .bar i { display: block; height: 100%; border-radius: 3px; width: 0; transition: width 0.15s linear; }
+.site .meta { grid-column: 2 / 4; font-size: 0.8rem; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.site.off { opacity: 0.45; }
+.note { font-size: 0.82rem; color: var(--fg-2); margin: 0; }
+@media (prefers-reduced-motion: reduce) { .site .bar i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="label">Winter 2020/21 · one launch a day per site · 21-day flights</span>
+    <h1>Where one winter of launches goes</h1>
+    <p class="lede">Virtual balloons released every day from 1 Dec 2020 to 28 Feb 2021 from two Iceland sites, two northeastern US sites and Juneau. Shaded cells are the gap: more than 500 km from any active radiosonde station, between 45°N and 90°N, 70°W and 30°E.</p>
+  </header>
+
+  <div class="main">
+    <section class="mapbox" aria-label="Map of balloon positions">
+      <canvas id="map" role="img" aria-label="Polar map showing balloon positions and the observing gap"></canvas>
+      <div class="time">
+        <button id="play" type="button" aria-label="Play">Play</button>
+        <input id="t" type="range" min="0" max="440" step="1" value="60" aria-label="Simulation time">
+        <output id="when" for="t"></output>
+      </div>
+      <div class="legend">
+        <span><i class="swatch"></i>500 km gap</span>
+        <span><i class="dot"></i>Active radiosonde station</span>
+        <span>Dots: balloons aloft · tails: last 2 days</span>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="card">
+        <span class="label">Flight mode</span>
+        <div class="modes" id="modes" role="group" aria-label="Flight mode">
+          <button type="button" data-mode="drift850" aria-pressed="false">Drifting<small>850 hPa, about 1.5 km</small></button>
+          <button type="button" data-mode="drift500" aria-pressed="true">Drifting<small>500 hPa, about 5.5 km</small></button>
+          <button type="button" data-mode="steer_persistence" aria-pressed="false">Steered<small>no look-ahead</small></button>
+          <button type="button" data-mode="steer_perfect" aria-pressed="false">Steered<small>perfect 6 h look-ahead</small></button>
+        </div>
+        <p class="note">Steered balloons pick 850 or 500 hPa every 6 hours to stay in the gap. 250 hPa is left out because it sits in the FL300 to FL400 band WindBorne no longer floats in.</p>
+      </div>
+
+      <div class="card">
+        <span class="label">Hours in the gap so far, all launches</span>
+        <div class="sites" id="sites"></div>
+      </div>
+
+      <p class="note">Simulated with ERA5 reanalysis winds (1.5°), simplified steering. Not WindBorne flight data. *New York is a stand-in location. Method and limits: see the write-up.</p>
+    </aside>
+  </div>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const STEPS_PER_DAY = 24 / DATA.step_h;            // 4 positions per day
+const LAST = DATA.track_len - 1;                   // index of the 21-day point
+const T_MAX = (DATA.n_days - 1) * STEPS_PER_DAY + LAST;
+const START = new Date(DATA.start + "T00:00:00Z");
+
+let mode = "drift500";
+let t = 60;
+const visible = DATA.sites.map(() => true);
+
+// ---- polar projection: azimuthal equidistant around the North Pole, 40°W pointing down
+const LON0 = -40, MAX_R = 68;                      // show down to 22°N
+const canvas = document.getElementById("map");
+const ctx = canvas.getContext("2d");
+let W = 0, CX = 0, CY = 0, RAD = 0;
+function project(lat, lon) {
+  const r = (90 - lat) / MAX_R * RAD;
+  const a = (lon - LON0) * Math.PI / 180;
+  return [CX + r * Math.sin(a), CY + r * Math.cos(a)];
+}
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// gap lookup on the 1.5° region grid (nearest cell), same rule as balloon.in_gap
+const R = DATA.region;
+function inGap(lat, lon) {
+  if (lat < R.lat0 - R.step / 2 || lon < R.lon0 - R.step / 2 || lon > R.lon0 + (R.n_lon - 1) * R.step + R.step / 2) return false;
+  const i = Math.min(R.n_lat - 1, Math.max(0, Math.round((lat - R.lat0) / R.step)));
+  const j = Math.min(R.n_lon - 1, Math.max(0, Math.round((lon - R.lon0) / R.step)));
+  return R.mask[i * R.n_lon + j] === "1";
+}
+
+// ---- static layer (ocean, graticule, gap, coast, stations), redrawn on resize/theme only
+const base = document.createElement("canvas");
+function drawBase() {
+  const dpr = window.devicePixelRatio || 1;
+  W = canvas.clientWidth;
+  canvas.width = base.width = Math.round(W * dpr);
+  canvas.height = base.height = Math.round(W * dpr);
+  CX = CY = W / 2; RAD = W / 2 - 4;
+  const b = base.getContext("2d");
+  b.setTransform(dpr, 0, 0, dpr, 0, 0);
+  b.clearRect(0, 0, W, W);
+  b.fillStyle = css("--ocean");
+  b.beginPath(); b.arc(CX, CY, RAD, 0, Math.PI * 2); b.fill();
+  b.save(); b.beginPath(); b.arc(CX, CY, RAD, 0, Math.PI * 2); b.clip();
+
+  b.strokeStyle = css("--grid"); b.lineWidth = 1;
+  for (const lat of [30, 45, 60, 75]) {
+    b.beginPath(); b.arc(CX, CY, (90 - lat) / MAX_R * RAD, 0, Math.PI * 2); b.stroke();
+  }
+  for (let lon = -180; lon < 180; lon += 30) {
+    const [x, y] = project(22, lon);
+    b.beginPath(); b.moveTo(CX, CY); b.lineTo(x, y); b.stroke();
+  }
+
+  b.fillStyle = css("--gap");
+  for (let i = 0; i < R.n_lat; i++) for (let j = 0; j < R.n_lon; j++) {
+    if (R.mask[i * R.n_lon + j] !== "1") continue;
+    const lat = R.lat0 + i * R.step, lon = R.lon0 + j * R.step, h = R.step / 2;
+    const pts = [[lat - h, lon - h], [lat - h, lon + h], [lat + Math.min(h, 90 - lat), lon + h], [lat + Math.min(h, 90 - lat), lon - h]];
+    b.beginPath();
+    pts.forEach(([a, o], k) => { const [x, y] = project(a, o); k ? b.lineTo(x, y) : b.moveTo(x, y); });
+    b.closePath(); b.fill();
+  }
+
+  b.strokeStyle = css("--land"); b.lineWidth = 1;
+  for (const line of DATA.coast) {
+    b.beginPath();
+    for (let k = 0; k < line.length; k += 2) {
+      const [x, y] = project(line[k], line[k + 1]);
+      k ? b.lineTo(x, y) : b.moveTo(x, y);
+    }
+    b.stroke();
+  }
+
+  b.fillStyle = css("--station");
+  for (let k = 0; k < DATA.stations.length; k += 2) {
+    const [x, y] = project(DATA.stations[k], DATA.stations[k + 1]);
+    b.beginPath(); b.arc(x, y, 1.6, 0, Math.PI * 2); b.fill();
+  }
+  b.restore();
+  b.strokeStyle = css("--line"); b.lineWidth = 1;
+  b.beginPath(); b.arc(CX, CY, RAD, 0, Math.PI * 2); b.stroke();
+
+  // latitude labels
+  b.fillStyle = css("--fg-3"); b.font = `11px ${css("--font-mono")}`;
+  for (const lat of [30, 45, 60, 75]) {
+    const [x, y] = project(lat, 140);
+    b.fillText(`${lat}°N`, x + 3, y);
+  }
+}
+
+// ---- per-site summary rows
+const sitesEl = document.getElementById("sites");
+const rows = DATA.sites.map((s, i) => {
+  const row = document.createElement("div");
+  row.className = "site";
+  row.innerHTML = `
+    <input type="checkbox" id="site-${i}" checked aria-label="Show ${s.name}">
+    <label class="name" for="site-${i}"><span class="chip" style="background:${s.colour}"></span>${s.name}</label>
+    <span class="total"></span>
+    <span class="bar"><i style="background:${s.colour}"></i></span>
+    <span class="meta"></span>`;
+  row.querySelector("input").addEventListener("change", e => {
+    visible[i] = e.target.checked; row.classList.toggle("off", !visible[i]); draw();
+  });
+  sitesEl.appendChild(row);
+  return row;
+});
+
+function median(arr) {
+  const s = [...arr].sort((a, b) => a - b), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+// ---- one frame
+function draw() {
+  const dpr = window.devicePixelRatio || 1;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(base, 0, 0);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.save(); ctx.beginPath(); ctx.arc(CX, CY, RAD, 0, Math.PI * 2); ctx.clip();
+
+  const M = DATA.modes[mode];
+  const totals = [];
+  DATA.sites.forEach((s, si) => {
+    const tracks = M.tracks[si], cum = M.gapcum[si];
+    let total = 0, aloft = 0, nowIn = 0, launched = 0;
+    for (let d = 0; d < DATA.n_days; d++) {
+      const k = t - d * STEPS_PER_DAY;
+      if (k < 0) break;
+      launched++;
+      total += cum[d][Math.min(k, LAST)];
+      if (k > LAST) continue;
+      aloft++;
+      const tr = tracks[d];
+      const lat = tr[2 * k] / 10, lon = tr[2 * k + 1] / 10;
+      if (inGap(lat, lon)) nowIn++;
+      if (!visible[si]) continue;
+      // tail: last 2 days
+      ctx.strokeStyle = s.colour; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let q = Math.max(0, k - 8); q <= k; q++) {
+        const [x, y] = project(tr[2 * q] / 10, tr[2 * q + 1] / 10);
+        q === Math.max(0, k - 8) ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      const [x, y] = project(lat, lon);
+      ctx.fillStyle = s.colour; ctx.strokeStyle = css("--panel"); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(x, y, 3.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+    totals.push({ total, aloft, nowIn, launched });
+    // launch site marker
+    const [sx, sy] = project(s.lat, s.lon);
+    ctx.fillStyle = css("--fg"); ctx.globalAlpha = visible[si] ? 1 : 0.35;
+    ctx.beginPath(); ctx.moveTo(sx, sy - 6); ctx.lineTo(sx + 5, sy + 4); ctx.lineTo(sx - 5, sy + 4); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+  ctx.restore();
+
+  const maxTotal = Math.max(1, ...totals.map(o => o.total));
+  totals.forEach((o, si) => {
+    const row = rows[si];
+    const finals = M.gapcum[si].map(c => c[LAST]);
+    row.querySelector(".total").textContent = o.total.toLocaleString("en-GB");
+    row.querySelector(".bar i").style.width = `${(o.total / maxTotal) * 100}%`;
+    row.querySelector(".meta").textContent =
+      `${o.nowIn} of ${o.aloft} aloft in the gap now · ${o.launched} launched · whole-winter median ${median(finals)} h per launch`;
+  });
+
+  const when = new Date(START.getTime() + t * DATA.step_h * 3600e3);
+  document.getElementById("when").textContent =
+    when.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) +
+    `, ${String(when.getUTCHours()).padStart(2, "0")} UTC`;
+}
+
+// ---- controls
+const slider = document.getElementById("t");
+slider.max = T_MAX;
+slider.addEventListener("input", () => { t = +slider.value; draw(); });
+document.getElementById("modes").addEventListener("click", e => {
+  const btn = e.target.closest("button"); if (!btn) return;
+  mode = btn.dataset.mode;
+  document.querySelectorAll("#modes button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+  draw();
+});
+let timer = null;
+const playBtn = document.getElementById("play");
+function stop() { clearInterval(timer); timer = null; playBtn.textContent = "Play"; playBtn.setAttribute("aria-label", "Play"); }
+playBtn.addEventListener("click", () => {
+  if (timer) return stop();
+  if (t >= T_MAX) t = 0;
+  playBtn.textContent = "Pause"; playBtn.setAttribute("aria-label", "Pause");
+  timer = setInterval(() => {
+    t = Math.min(T_MAX, t + 1); slider.value = t; draw();
+    if (t >= T_MAX) stop();
+  }, 90);
+});
+
+function redrawAll() { drawBase(); draw(); }
+new ResizeObserver(redrawAll).observe(canvas);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll);
+new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+redrawAll();
+</script>
