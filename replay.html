@@ -1,8 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Iceland Launch Replay</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
+html { color-scheme: light dark; }
 /* Layout: polar map on the left, controls and per-site counters on the right; stacks on phones. */
 :root {
   --bg: #f4f6f8;          /* page */
@@ -88,6 +94,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .note { font-size: 0.82rem; color: var(--fg-2); margin: 0; }
 @media (prefers-reduced-motion: reduce) { .site .bar i { transition: none; } }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
@@ -341,3 +349,6 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll)
 new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 redrawAll();
 </script>
+
+</body>
+</html>
